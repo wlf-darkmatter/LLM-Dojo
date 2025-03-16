@@ -14,11 +14,11 @@ class DPOLoss(nn.Module):
         self.beta = beta
 
     def forward(
-            self,
-            policy_chosen_logps: torch.Tensor,
-            policy_rejected_logps: torch.Tensor,
-            reference_chosen_logps: torch.Tensor,
-            reference_rejected_logps: torch.Tensor,
+        self,
+        policy_chosen_logps: torch.Tensor,
+        policy_rejected_logps: torch.Tensor,
+        reference_chosen_logps: torch.Tensor,
+        reference_rejected_logps: torch.Tensor,
     ):
         """
         policy_chosen_logps: 模型输出的对数概率。Shape: (batch_size,)
@@ -51,9 +51,9 @@ class SimPo(nn.Module):
         self.gamma = gamma
 
     def forward(
-            self,
-            policy_chosen_logps: torch.Tensor,
-            policy_rejected_logps: torch.Tensor,
+        self,
+        policy_chosen_logps: torch.Tensor,
+        policy_rejected_logps: torch.Tensor,
     ):
         """
         policy_chosen_logps: 模型输出的对数概率。Shape: (batch_size,)
@@ -82,11 +82,7 @@ def compute_logprobs(logits, labels, mask=None):
 
     logps = F.log_softmax(logits, dim=-1)
 
-    select_logprobs = torch.gather(
-        input=logps,
-        dim=-1,
-        index=labels.unsqueeze(1)
-    ).squeeze(1)
+    select_logprobs = torch.gather(input=logps, dim=-1, index=labels.unsqueeze(1)).squeeze(1)
 
     if mask is not None:
         mask = mask[:, 1:].clone()
@@ -129,28 +125,12 @@ def compute_logprobs_f_cross(logits, labels, mask=None):
 def compute_batch_loss(batch, policy_model, reference_model, beta):
     # 决定使用哪个loss
     # loss_fn = SimPo(beta, 0.5)   SimPO loss
-    loss_fn = DPOLoss(beta)   # DPO loss
+    loss_fn = DPOLoss(beta)  # DPO loss
 
-    policy_chosen_logps = compute_logprobs(
-        logits=policy_model(batch["chosen"]).logits,
-        labels=batch["chosen"],
-        mask=batch["chosen_mask"]
-    )
-    policy_rejected_logps = compute_logprobs(
-        logits=policy_model(batch["rejected"]).logits,
-        labels=batch["rejected"],
-        mask=batch["rejected_mask"]
-    )
-    reference_chosen_logps = compute_logprobs(
-        logits=reference_model(batch['chosen']).logits,
-        labels=batch['chosen'],
-        mask=batch["chosen_mask"]
-    )
-    reference_rejected_logps = compute_logprobs(
-        logits=reference_model(batch['rejected']).logits,
-        labels=batch['rejected'],
-        mask=batch["rejected_mask"]
-    )
+    policy_chosen_logps = compute_logprobs(logits=policy_model(batch["chosen"]).logits, labels=batch["chosen"], mask=batch["chosen_mask"])
+    policy_rejected_logps = compute_logprobs(logits=policy_model(batch["rejected"]).logits, labels=batch["rejected"], mask=batch["rejected_mask"])
+    reference_chosen_logps = compute_logprobs(logits=reference_model(batch["chosen"]).logits, labels=batch["chosen"], mask=batch["chosen_mask"])
+    reference_rejected_logps = compute_logprobs(logits=reference_model(batch["rejected"]).logits, labels=batch["rejected"], mask=batch["rejected_mask"])
     loss, chosen_rewards, rejected_rewards = loss_fn(
         policy_chosen_logps=policy_chosen_logps,
         policy_rejected_logps=policy_rejected_logps,
@@ -167,17 +147,12 @@ def compute_batch_loss(batch, policy_model, reference_model, beta):
 
 
 def compute_loss_dataloader(data_loader, policy_model, reference_model, beta, num_batches=5):
-    total_loss, total_chosen_rewards, total_rejected_rewards = 0., 0., 0.
+    total_loss, total_chosen_rewards, total_rejected_rewards = 0.0, 0.0, 0.0
     num_batches = min(num_batches, len(data_loader))
 
     for i, batch in enumerate(data_loader):
         if i < num_batches:
-            loss, chosen_rewards, rejected_rewards = compute_batch_loss(
-                batch=batch,
-                policy_model=policy_model,
-                reference_model=reference_model,
-                beta=beta
-            )
+            loss, chosen_rewards, rejected_rewards = compute_batch_loss(batch=batch, policy_model=policy_model, reference_model=reference_model, beta=beta)
             total_loss += loss.item()
             total_chosen_rewards += chosen_rewards.item()
             total_rejected_rewards += rejected_rewards.item()
@@ -192,11 +167,7 @@ def compute_loss_dataloader(data_loader, policy_model, reference_model, beta, nu
 
 if __name__ == "__main__":
     # 测试compute_logprobs_f_cross 与 compute_logprobs
-    logits = torch.tensor(
-        [[2.0, 1.0, 0.1, 0.4],
-         [0.5, 2.5, 0.3, 0.5],
-         [0.6, 2.5, 0.3, 0.8],
-         [0.5, 2.5, 0.6, 0.6]], dtype=torch.float32).unsqueeze(0)
+    logits = torch.tensor([[2.0, 1.0, 0.1, 0.4], [0.5, 2.5, 0.3, 0.5], [0.6, 2.5, 0.3, 0.8], [0.5, 2.5, 0.6, 0.6]], dtype=torch.float32).unsqueeze(0)
     mask = torch.tensor([[True, True, False, False]])
     targets = torch.tensor([0, 1, 0, 2]).unsqueeze(0)
     loss1 = -compute_logprobs(logits, targets, mask)

@@ -11,10 +11,10 @@ from pathlib import Path
 
 # 1、加载模型与tokenizer
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path = '/Weights/LLM/Qwen2.5/Qwen2.5-1.5B-DeepSeek-R1-Instruct/'
+model_path = "/Weights/LLM/Qwen2.5/Qwen2.5-1.5B-DeepSeek-R1-Instruct/"
 model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
 ref_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
-#* 加载两个模型
+# * 加载两个模型
 ref_model.eval()
 model.to(device)
 ref_model.to(device)
@@ -22,7 +22,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remo
 
 # 2、处理数据
 # 加载数据
-data_file = Path(__file__).parent.joinpath('./unsloth_dpo.jsonl')
+data_file = Path(__file__).parent.joinpath("./unsloth_dpo.jsonl")
 # Dataset详细逻辑可看进入RlhfDataset实现
 dataset = RlhfDataset(data_file, tokenizer)
 # 划分训练集验证集
@@ -35,13 +35,7 @@ IGNORE_INDEX = False
 
 
 def data_collate(batch, pad_token_id, device, max_length=None, if_mask_prompt=True):
-    batch_data = {
-        "prompt": [],
-        "chosen": [],
-        "rejected": [],
-        "rejected_mask": [],
-        "chosen_mask": []
-    }
+    batch_data = {"prompt": [], "chosen": [], "rejected": [], "rejected_mask": [], "chosen_mask": []}
 
     # 判断长度及padding
     max_length_common = 0
@@ -51,8 +45,8 @@ def data_collate(batch, pad_token_id, device, max_length=None, if_mask_prompt=Tr
 
     # 转为torch tensor并padding,决定是否对prompt进行mask
     for item in batch:
-        prompt = torch.tensor(item['prompt'])
-        batch_data['prompt'].append(prompt)
+        prompt = torch.tensor(item["prompt"])
+        batch_data["prompt"].append(prompt)
 
         for key in ["chosen", "rejected"]:
             out = item[key]
@@ -60,10 +54,10 @@ def data_collate(batch, pad_token_id, device, max_length=None, if_mask_prompt=Tr
             mask = torch.ones(len(out_padding)).bool()
 
             # padding部分的mask设置为 IGNORE_INDEX
-            mask[len(out):] = IGNORE_INDEX
+            mask[len(out) :] = IGNORE_INDEX
 
             if if_mask_prompt:
-                mask[:prompt.shape[0] + 2] = IGNORE_INDEX
+                mask[: prompt.shape[0] + 2] = IGNORE_INDEX
             batch_data[key].append(torch.tensor(out_padding))
             batch_data[f"{key}_mask"].append(mask)
 
@@ -77,64 +71,24 @@ def data_collate(batch, pad_token_id, device, max_length=None, if_mask_prompt=Tr
     return batch_data
 
 
-customized_collate_fn = partial(
-    data_collate,
-    pad_token_id=tokenizer.pad_token_id,
-    device=device,
-    if_mask_prompt=True,
-    max_length=1024
-)
-# 设置相关参数
-batch_size = 1
-train_loader = DataLoader(
-    train_dataset,
-    batch_size=batch_size,
-    collate_fn=customized_collate_fn,
-    shuffle=True,
-    drop_last=True
-)
-val_loader = DataLoader(
-    val_dataset,
-    batch_size=1,
-    collate_fn=customized_collate_fn,
-    shuffle=False,
-    drop_last=False
-)
-
-
 #! 3、开始计算DPO(或其他)的损失函数
 #! 相关代码可以再loss里查看，就不写在主函数里了。
 
+
 # 4、编写训练函数
-def train_model(
-        policy_model, reference_model, train_loader, val_loader,
-        optimizer, num_epochs, beta,
-        eval_freq, eval_iter):
-    tracking = {
-        "train_losses": [],
-        "train_chosen_rewards": [],
-        "train_rejected_rewards": [],
-        "val_losses": [],
-        "val_chosen_rewards": [],
-        "val_rejected_rewards": [],
-        "tokens_seen": []
-    }
+def train_model(policy_model, reference_model, train_loader, val_loader, optimizer, num_epochs, beta, eval_freq, eval_iter):
+    tracking = {"train_losses": [], "train_chosen_rewards": [], "train_rejected_rewards": [], "val_losses": [], "val_chosen_rewards": [], "val_rejected_rewards": [], "tokens_seen": []}
     tokens_seen, global_step = 0, -1
 
-    #* 训练
+    # * 训练
     for epoch in range(num_epochs):
-        #* policy 模型需要训练
+        # * policy 模型需要训练
         policy_model.train()
 
         for idx, batch in enumerate(train_loader):
             optimizer.zero_grad()
 
-            loss, chosen_rewards, rejected_rewards = compute_batch_loss(
-                batch=batch,
-                policy_model=policy_model,
-                reference_model=reference_model,
-                beta=beta
-            )
+            loss, chosen_rewards, rejected_rewards = compute_batch_loss(batch=batch, policy_model=policy_model, reference_model=reference_model, beta=beta)
             loss.backward()
             optimizer.step()
 
@@ -143,14 +97,7 @@ def train_model(
 
             # 验证
             if global_step % eval_freq == 0:
-                res = evaluate_loss_dataloader(
-                    policy_model=policy_model,
-                    reference_model=reference_model,
-                    train_loader=train_loader,
-                    val_loader=val_loader,
-                    beta=beta,
-                    eval_iter=eval_iter
-                )
+                res = evaluate_loss_dataloader(policy_model=policy_model, reference_model=reference_model, train_loader=train_loader, val_loader=val_loader, beta=beta, eval_iter=eval_iter)
                 tracking["train_losses"].append(res["train_loss"])
                 tracking["train_chosen_rewards"].append(res["train_chosen_reward"])
                 tracking["train_rejected_rewards"].append(res["train_rejected_reward"])
@@ -177,6 +124,12 @@ def main():
     start_time = time.time()
     optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
 
+    customized_collate_fn = partial(data_collate, pad_token_id=tokenizer.pad_token_id, device=device, if_mask_prompt=True, max_length=1024)
+    # 设置相关参数
+    batch_size = 1
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=customized_collate_fn, shuffle=True, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, collate_fn=customized_collate_fn, shuffle=False, drop_last=False)
+
     num_epochs = 3
     tracking = train_model(
         policy_model=model,
@@ -187,7 +140,7 @@ def main():
         num_epochs=num_epochs,
         beta=0.1,  # value between 0.1 and 0.5
         eval_freq=2,
-        eval_iter=2
+        eval_iter=2,
     )
 
     end_time = time.time()

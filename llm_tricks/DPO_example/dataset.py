@@ -12,9 +12,9 @@ class RlhfDataset(Dataset):
     def __getitem__(self, item):
         data = self.data_list[item]
         data = json.loads(data)
-        prompt = data['prompt']
-        chosen = data['chosen']
-        rejected = data['rejected']
+        prompt = data["prompt"]
+        chosen = data["chosen"]
+        rejected = data["rejected"]
 
         chosen_full_text = f"{prompt}\n\n### Response:\n{chosen}"
         rejected_full_text = f"{prompt}\n\n### Response:\n{rejected}"
@@ -24,10 +24,10 @@ class RlhfDataset(Dataset):
         rejected_full_tokens = self.tokenizer.encode(rejected_full_text, add_special_tokens=False)
 
         input = {
-                "prompt": prompt_tokens,
-                "chosen": chosen_full_tokens,
-                "rejected": rejected_full_tokens,
-            }
+            "prompt": prompt_tokens,
+            "chosen": chosen_full_tokens,
+            "rejected": rejected_full_tokens,
+        }
         return input
 
     def __len__(self):

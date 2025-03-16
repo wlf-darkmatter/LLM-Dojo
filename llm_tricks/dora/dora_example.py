@@ -13,21 +13,12 @@ BATCH_SIZE = 64
 
 # --------data process------------------------------------------------
 
-train_dataset = datasets.MNIST(root='data',
-                               train=True,
-                               transform=transforms.ToTensor(),
-                               download=True)
-test_dataset = datasets.MNIST(root='data',
-                              train=False,
-                              transform=transforms.ToTensor())
+train_dataset = datasets.MNIST(root="data", train=True, transform=transforms.ToTensor(), download=True)
+test_dataset = datasets.MNIST(root="data", train=False, transform=transforms.ToTensor())
 
-train_loader = DataLoader(dataset=train_dataset,
-                          batch_size=BATCH_SIZE,
-                          shuffle=True)
+train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-test_loader = DataLoader(dataset=test_dataset,
-                         batch_size=BATCH_SIZE,
-                         shuffle=False)
+test_loader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 # ----------------Hyperparameters-------------------------------------
 random_seed = 123
@@ -47,29 +38,21 @@ torch.manual_seed(random_seed)
 class TestMLP(nn.Module):
     def __init__(self, num_features, num_hidden1, num_hidden2, num_class):
         super().__init__()
-        self.layers = nn.Sequential(
-            nn.Linear(num_features, num_hidden1),
-            nn.ReLU(),
-            nn.Linear(num_hidden1, num_hidden2),
-            nn.ReLU(),
-
-            nn.Linear(num_hidden2, num_class)
-        )
+        self.layers = nn.Sequential(nn.Linear(num_features, num_hidden1), nn.ReLU(), nn.Linear(num_hidden1, num_hidden2), nn.ReLU(), nn.Linear(num_hidden2, num_class))
 
     def forward(self, x):
         x = self.layers(x)
         return x
 
 
-model = TestMLP(
-    num_features=num_features, num_hidden1=num_hidden_1, num_hidden2=num_hidden_2, num_class=num_classes
-)
+model = TestMLP(num_features=num_features, num_hidden1=num_hidden_1, num_hidden2=num_hidden_2, num_class=num_classes)
 
 model.to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 
 # ---------------------Eval---------------------------------------------
+
 
 def computer_metrics(model, data_loader, device):
     model.eval()
@@ -111,15 +94,11 @@ def train(epochs, model, optimizer, train_loader, device):
 
             # LOGGING
             if not batch_idx % 400:
-                print('Epoch: %03d/%03d | Batch %03d/%03d | Loss: %.4f'
-                      % (epoch + 1, epochs, batch_idx,
-                         len(train_loader), loss))
+                print("Epoch: %03d/%03d | Batch %03d/%03d | Loss: %.4f" % (epoch + 1, epochs, batch_idx, len(train_loader), loss))
         with torch.set_grad_enabled(False):
-            print('Epoch: %03d/%03d training accuracy: %.2f%%' % (
-                epoch + 1, epochs,
-                computer_metrics(model, train_loader, device)))
-        print('Time elapsed: %.2f min' % ((time.time() - start_time) / 60))
-    print('Total Training Time: %.2f min' % ((time.time() - start_time) / 60))
+            print("Epoch: %03d/%03d training accuracy: %.2f%%" % (epoch + 1, epochs, computer_metrics(model, train_loader, device)))
+        print("Time elapsed: %.2f min" % ((time.time() - start_time) / 60))
+    print("Total Training Time: %.2f min" % ((time.time() - start_time) / 60))
 
 
 # ---------------------Lora Model---------------------------------------------
@@ -140,12 +119,7 @@ class LinearWithLoRA(nn.Module):
     def __init__(self, linear, rank, alpha):
         super().__init__()
         self.linear = linear
-        self.lora = LoRALayer(
-            linear.in_features,
-            linear.out_features,
-            rank,
-            alpha
-        )
+        self.lora = LoRALayer(linear.in_features, linear.out_features, rank, alpha)
 
     def forward(self, x):
         return self.linear(x) + self.lora(x)
@@ -156,9 +130,7 @@ class LinearWithDoRA(nn.Module):
     def __init__(self, linear, rank, alpha):
         super().__init__()
         self.linear = linear
-        self.lora = LoRALayer(
-            linear.in_features, linear.out_features, rank, alpha
-        )
+        self.lora = LoRALayer(linear.in_features, linear.out_features, rank, alpha)
         self.m = nn.Parameter(torch.ones(1, linear.out_features))
 
     def forward(self, x):
@@ -198,9 +170,9 @@ def convert_dora_layers(model):
             convert_lora_layers(module)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     train(num_epochs, model, optimizer, train_loader, DEVICE)
-    print(f'Test accuracy: {computer_metrics(model, test_loader, DEVICE):.2f}%')
+    print(f"Test accuracy: {computer_metrics(model, test_loader, DEVICE):.2f}%")
 
     # 复制两份模型，以供lora 和 dora分别实验
     model_lora = copy.deepcopy(model)
@@ -212,7 +184,7 @@ if __name__ == '__main__':
     model_lora.to(DEVICE)
     optimizer_lora = torch.optim.Adam(model_lora.parameters(), lr=learning_rate)
     train(2, model_lora, optimizer_lora, train_loader, DEVICE)
-    print(f'Test accuracy LoRA finetune: {computer_metrics(model_lora, test_loader, DEVICE):.2f}%')
+    print(f"Test accuracy LoRA finetune: {computer_metrics(model_lora, test_loader, DEVICE):.2f}%")
 
     # dora 训练
     convert_dora_layers(model_dora)
@@ -220,4 +192,4 @@ if __name__ == '__main__':
     model_dora.to(DEVICE)
     optimizer_dora = torch.optim.Adam(model_dora.parameters(), lr=learning_rate)
     train(2, model_dora, optimizer_dora, train_loader, DEVICE)
-    print(f'Test accuracy DoRA finetune: {computer_metrics(model_dora, test_loader, DEVICE):.2f}%')
+    print(f"Test accuracy DoRA finetune: {computer_metrics(model_dora, test_loader, DEVICE):.2f}%")
