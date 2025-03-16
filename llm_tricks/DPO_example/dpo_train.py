@@ -11,7 +11,9 @@ from pathlib import Path
 
 # 1、加载模型与tokenizer
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path = "/Weights/LLM/Qwen2.5/Qwen2.5-1.5B-DeepSeek-R1-Instruct/"
+model_path = "/Weights/LLM/Qwen2.5/Qwen2.5-0.5B-Instruct/"
+batch_size = 4
+
 model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
 ref_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
 # * 加载两个模型
@@ -29,6 +31,8 @@ dataset = RlhfDataset(data_file, tokenizer)
 train_size = int(len(dataset) * 0.85)  # 85% for training
 val_size = len(dataset) - train_size  # Remaining for validation
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+shuffle_train = False
+shuffle_val = False
 
 # 编写batch批次的padding及mask处理函数
 IGNORE_INDEX = False
@@ -126,9 +130,8 @@ def main():
 
     customized_collate_fn = partial(data_collate, pad_token_id=tokenizer.pad_token_id, device=device, if_mask_prompt=True, max_length=1024)
     # 设置相关参数
-    batch_size = 1
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=customized_collate_fn, shuffle=True, drop_last=True)
-    val_loader = DataLoader(val_dataset, batch_size=1, collate_fn=customized_collate_fn, shuffle=False, drop_last=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=customized_collate_fn, shuffle=shuffle_train, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, collate_fn=customized_collate_fn, shuffle=shuffle_val, drop_last=False)
 
     num_epochs = 3
     tracking = train_model(

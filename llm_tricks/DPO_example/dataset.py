@@ -23,12 +23,12 @@ class RlhfDataset(Dataset):
         chosen_full_tokens = self.tokenizer.encode(chosen_full_text, add_special_tokens=False)
         rejected_full_tokens = self.tokenizer.encode(rejected_full_text, add_special_tokens=False)
 
-        input = {
+        _input = {
             "prompt": prompt_tokens,
             "chosen": chosen_full_tokens,
             "rejected": rejected_full_tokens,
         }
-        return input
+        return _input
 
     def __len__(self):
         return len(self.data_list)
