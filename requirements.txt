@@ -1,5 +1,5 @@
 accelerate
-transformers>=4.44.2
+# transformers>=4.44.2
 peft
 bitsandbytes
 loguru
@@ -11,8 +11,8 @@ sentencepiece
 transformers-stream-generator
 tiktoken
 einops
-torch==2.5.0
+# torch==2.5.0
 datasets
 trl
 wandb
-PIL
+pillow

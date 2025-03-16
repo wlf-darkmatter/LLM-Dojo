@@ -6,12 +6,15 @@ from loss import compute_batch_loss
 from evaluate import evaluate_loss_dataloader
 import time
 from functools import partial
+from pathlib import Path
+
 
 # 1、加载模型与tokenizer
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
-model_path = '/IndexTeam/Index-1___9B-Chat'
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+model_path = '/Weights/LLM/Qwen2.5/Qwen2.5-1.5B-DeepSeek-R1-Instruct/'
 model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
 ref_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
+#* 加载两个模型
 ref_model.eval()
 model.to(device)
 ref_model.to(device)
@@ -19,7 +22,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remo
 
 # 2、处理数据
 # 加载数据
-data_file = './unsloth_dpo.jsonl'
+data_file = Path(__file__).parent.joinpath('./unsloth_dpo.jsonl')
 # Dataset详细逻辑可看进入RlhfDataset实现
 dataset = RlhfDataset(data_file, tokenizer)
 # 划分训练集验证集
@@ -82,7 +85,7 @@ customized_collate_fn = partial(
     max_length=1024
 )
 # 设置相关参数
-batch_size = 4
+batch_size = 1
 train_loader = DataLoader(
     train_dataset,
     batch_size=batch_size,
@@ -99,8 +102,8 @@ val_loader = DataLoader(
 )
 
 
-# 3、开始计算DPO(或其他)的损失函数
-# 相关代码可以再loss里查看，就不写在主函数里了。
+#! 3、开始计算DPO(或其他)的损失函数
+#! 相关代码可以再loss里查看，就不写在主函数里了。
 
 # 4、编写训练函数
 def train_model(
@@ -118,9 +121,9 @@ def train_model(
     }
     tokens_seen, global_step = 0, -1
 
-    # 训练
+    #* 训练
     for epoch in range(num_epochs):
-        # policy 模型需要训练
+        #* policy 模型需要训练
         policy_model.train()
 
         for idx, batch in enumerate(train_loader):
