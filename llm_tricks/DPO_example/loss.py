@@ -128,59 +128,79 @@ def compute_batch_loss(batch, policy_model, reference_model, beta):
     loss_fn = DPOLoss(beta)  # DPO loss
 
     r""" decoder layer forward
-    forward (\usr\local\lib\python3.10\dist-packages\transformers\models\qwen2\modeling_qwen2.py:255)
-    _call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1562)
-    _wrapped_call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1553)
-    forward (\usr\local\lib\python3.10\dist-packages\transformers\models\qwen2\modeling_qwen2.py:579)
-    _call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1562)
-    _wrapped_call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1553)
-    forward (\usr\local\lib\python3.10\dist-packages\transformers\models\qwen2\modeling_qwen2.py:856)
-    wrapped_func (\usr\local\lib\python3.10\dist-packages\transformers\utils\deprecation.py:172)
-    _call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1562)
-    _wrapped_call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1553)
-    compute_batch_loss (\workspace\LLM-Dojo\llm_tricks\DPO_example\loss.py:129)
-    train_model (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:95)
-    main (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:137)
-    <module> (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:155)
-    _run_code (\usr\lib\python3.10\runpy.py:86)
-    _run_module_as_main (\usr\lib\python3.10\runpy.py:196)
+
+    forward (/usr/local/lib/python3.10/dist-packages/transformers/models/qwen2/modeling_qwen2.py:255)
+    _call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1562)
+    _wrapped_call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1553)
+    forward (/usr/local/lib/python3.10/dist-packages/transformers/models/qwen2/modeling_qwen2.py:579)
+    _call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1562)
+    _wrapped_call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1553)
+    forward (/usr/local/lib/python3.10/dist-packages/transformers/models/qwen2/modeling_qwen2.py:856)
+    wrapped_func (/usr/local/lib/python3.10/dist-packages/transformers/utils/deprecation.py:172)
+    _call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1562)
+    _wrapped_call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1553)
+    compute_batch_loss (/workspace/LLM-Dojo/llm_tricks/DPO_example/loss.py:129)
+    train_model (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:95)
+    main (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:137)
+    <module> (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:155)
+    _run_code (/usr/lib/python3.10/runpy.py:86)
+    _run_module_as_main (/usr/lib/python3.10/runpy.py:196)
     """
 
     r""" 循环生成
-    forward (\usr\local\lib\python3.10\dist-packages\transformers\models\qwen2\modeling_qwen2.py:518)
-    _call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1562)
-    _wrapped_call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1553)
-    forward (\usr\local\lib\python3.10\dist-packages\transformers\models\qwen2\modeling_qwen2.py:856)
-    wrapped_func (\usr\local\lib\python3.10\dist-packages\transformers\utils\deprecation.py:172)
-    _call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1562)
-    _wrapped_call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1553)
-    compute_batch_loss (\workspace\LLM-Dojo\llm_tricks\DPO_example\loss.py:129)
-    train_model (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:95)
-    main (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:137)
-    <module> (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:155)
-    _run_code (\usr\lib\python3.10\runpy.py:86)
-    _run_module_as_main (\usr\lib\python3.10\runpy.py:196)
+    forward (/usr/local/lib/python3.10/dist-packages/transformers/models/qwen2/modeling_qwen2.py:518)
+    _call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1562)
+    _wrapped_call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1553)
+    forward (/usr/local/lib/python3.10/dist-packages/transformers/models/qwen2/modeling_qwen2.py:856)
+    wrapped_func (/usr/local/lib/python3.10/dist-packages/transformers/utils/deprecation.py:172)
+    _call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1562)
+    _wrapped_call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1553)
+    compute_batch_loss (/workspace/LLM-Dojo/llm_tricks/DPO_example/loss.py:129)
+    train_model (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:95)
+    main (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:137)
+    <module> (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:155)
+    _run_code (/usr/lib/python3.10/runpy.py:86)
+    _run_module_as_main (/usr/lib/python3.10/runpy.py:196)
     """
 
     r"""
-    forward (\usr\local\lib\python3.10\dist-packages\transformers\models\qwen2\modeling_qwen2.py:849)
-    wrapped_func (\usr\local\lib\python3.10\dist-packages\transformers\utils\deprecation.py:172)
-    _call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1562)
-    _wrapped_call_impl (\usr\local\lib\python3.10\dist-packages\torch\nn\modules\module.py:1553)
-    compute_batch_loss (\workspace\LLM-Dojo\llm_tricks\DPO_example\loss.py:129)
-    train_model (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:95)
-    main (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:137)
-    <module> (\workspace\LLM-Dojo\llm_tricks\DPO_example\dpo_train.py:155)
-    _run_code (\usr\lib\python3.10\runpy.py:86)
-    _run_module_as_main (\usr\lib\python3.10\runpy.py:196)
+    forward (/usr/local/lib/python3.10/dist-packages/transformers/models/qwen2/modeling_qwen2.py:849)
+    wrapped_func (/usr/local/lib/python3.10/dist-packages/transformers/utils/deprecation.py:172)
+    _call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1562)
+    _wrapped_call_impl (/usr/local/lib/python3.10/dist-packages/torch/nn/modules/module.py:1553)
+    compute_batch_loss (/workspace/LLM-Dojo/llm_tricks/DPO_example/loss.py:129)
+    train_model (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:95)
+    main (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:137)
+    <module> (/workspace/LLM-Dojo/llm_tricks/DPO_example/dpo_train.py:155)
+    _run_code (/usr/lib/python3.10/runpy.py:86)
+    _run_module_as_main (/usr/lib/python3.10/runpy.py:196)
     """
+    from dpo_train import tokenizer
+    from dataset import translate
+
+    translate(tokenizer, batch["chosen"], verbose=True)
+    translate(tokenizer, batch["rejected"], verbose=True)
     output_chosen = policy_model(batch["chosen"])
     output_rejected = policy_model(batch["rejected"])
 
+    print("\n\n======\n|MASK|\n======\n\n")
+    translate(tokenizer, batch["chosen"], batch["chosen_mask"], verbose=True)
+    translate(tokenizer, batch["rejected"], batch["rejected_mask"], verbose=True)
+
+    ref_chosen = reference_model(batch["chosen"])
+    ref_rejected = reference_model(batch["rejected"])
+
+    """
+    torch.save(output_chosen.logits.cpu(), "output_chosen.logits.pt")
+    torch.save(output_rejected.logits.cpu(), "output_rejected.logits.pt")
+    torch.save(ref_chosen.logits.cpu(), "ref_chosen.logits.pt")
+    torch.save(ref_rejected.logits.cpu(), "ref_rejected.logits.pt")
+    """
+
     policy_chosen_logps = compute_logprobs(logits=output_chosen.logits, labels=batch["chosen"], mask=batch["chosen_mask"])
     policy_rejected_logps = compute_logprobs(logits=output_rejected.logits, labels=batch["rejected"], mask=batch["rejected_mask"])
-    reference_chosen_logps = compute_logprobs(logits=reference_model(batch["chosen"]).logits, labels=batch["chosen"], mask=batch["chosen_mask"])
-    reference_rejected_logps = compute_logprobs(logits=reference_model(batch["rejected"]).logits, labels=batch["rejected"], mask=batch["rejected_mask"])
+    reference_chosen_logps = compute_logprobs(logits=ref_chosen.logits, labels=batch["chosen"], mask=batch["chosen_mask"])
+    reference_rejected_logps = compute_logprobs(logits=ref_rejected.logits, labels=batch["rejected"], mask=batch["rejected_mask"])
     loss, chosen_rewards, rejected_rewards = loss_fn(
         policy_chosen_logps=policy_chosen_logps,
         policy_rejected_logps=policy_rejected_logps,

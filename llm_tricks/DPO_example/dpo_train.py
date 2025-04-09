@@ -7,33 +7,24 @@ from evaluate import evaluate_loss_dataloader
 import time
 from functools import partial
 from pathlib import Path
+from argparse import ArgumentParser
+
+parser = ArgumentParser("DPO Training")
+parser.add_argument("--model_path", type=str, default="/Weights/LLM/Qwen2.5/Qwen2.5-0.5B-Instruct/")
+parser.add_argument("--gradient", action="store_true")
 
 
+args = parser.parse_args()
 # 1、加载模型与tokenizer
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path = "/Weights/LLM/Qwen2.5/Qwen2.5-0.5B-Instruct/"
-batch_size = 4
 
-model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
-ref_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
-# * 加载两个模型
-ref_model.eval()
-model.to(device)
-ref_model.to(device)
-tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remote_code=True)
+model_path = args.model_path
+batch_size = 1
 
-# 2、处理数据
-# 加载数据
 data_file = Path(__file__).parent.joinpath("./unsloth_dpo.jsonl")
 # Dataset详细逻辑可看进入RlhfDataset实现
+tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remote_code=True)
 dataset = RlhfDataset(data_file, tokenizer)
-# 划分训练集验证集
-train_size = int(len(dataset) * 0.85)  # 85% for training
-val_size = len(dataset) - train_size  # Remaining for validation
-train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-shuffle_train = False
-shuffle_val = False
-
 # 编写batch批次的padding及mask处理函数
 IGNORE_INDEX = False
 
@@ -80,7 +71,17 @@ def data_collate(batch, pad_token_id, device, max_length=None, if_mask_prompt=Tr
 
 
 # 4、编写训练函数
-def train_model(policy_model, reference_model, train_loader, val_loader, optimizer, num_epochs, beta, eval_freq, eval_iter):
+def train_model(
+    policy_model,
+    reference_model,
+    train_loader,
+    val_loader,
+    optimizer,
+    num_epochs,
+    beta,
+    eval_freq,
+    eval_iter,
+):
     tracking = {"train_losses": [], "train_chosen_rewards": [], "train_rejected_rewards": [], "val_losses": [], "val_chosen_rewards": [], "val_rejected_rewards": [], "tokens_seen": []}
     tokens_seen, global_step = 0, -1
 
@@ -124,12 +125,34 @@ def train_model(policy_model, reference_model, train_loader, val_loader, optimiz
 
 # 5、开始训练！
 def main():
+    #! Step 1: setup model
+    # * 加载两个模型
+    model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
+    model.to(device)
+    ref_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
+    ref_model.to(device)
+    ref_model.eval()
+
     torch.manual_seed(42)
     start_time = time.time()
     optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
+    # * 配置
+    if args.gradient:
+        model.gradient_checkpointing = True
+        model.model.gradient_checkpointing = True
 
-    customized_collate_fn = partial(data_collate, pad_token_id=tokenizer.pad_token_id, device=device, if_mask_prompt=True, max_length=1024)
+    #! Step 2: 处理数据
+    # 加载数据
+
+    # 划分训练集验证集
+    train_size = int(len(dataset) * 0.85)  # 85% for training
+    val_size = len(dataset) - train_size  # Remaining for validation
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    shuffle_train = False
+    shuffle_val = False
+
     # 设置相关参数
+    customized_collate_fn = partial(data_collate, pad_token_id=tokenizer.pad_token_id, device=device, if_mask_prompt=True, max_length=1024)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=customized_collate_fn, shuffle=shuffle_train, drop_last=True)
     val_loader = DataLoader(val_dataset, batch_size=1, collate_fn=customized_collate_fn, shuffle=shuffle_val, drop_last=False)
 

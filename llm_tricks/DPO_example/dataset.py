@@ -1,5 +1,8 @@
 from torch.utils.data import Dataset
 import json
+import torch
+import rich
+from rich import console
 
 
 class RlhfDataset(Dataset):
@@ -32,3 +35,41 @@ class RlhfDataset(Dataset):
 
     def __len__(self):
         return len(self.data_list)
+
+
+def translate(tokenizer, list_tokens: list, list_mask: list = None, verbose=False):
+    if isinstance(list_tokens, torch.Tensor):
+        if list_mask is not None:
+            assert list_tokens.ndim == list_mask.ndim
+        if list_tokens.ndim == 1:
+            list_tokens = [list_tokens]
+            if list_mask is not None:
+                list_mask = [list_mask]
+
+    eos_id = tokenizer.eos_token_id
+    pad_id = tokenizer.pad_token_id
+    list_echo = []
+    str_rule = "Translate"
+    if list_mask is not None:
+        iterator_mask = iter(list_mask)  # * 遮挡 mask
+        str_rule = "Translate with Mask"
+    for tokens in list_tokens:
+        if list_mask is not None:
+            mask = next(iterator_mask)
+            tokens = tokens[mask]
+        idxes = torch.where(tokens == pad_id)[0]
+        if len(idxes) == 0:
+            ret = tokenizer.decode(tokens)
+        else:
+            idx = idxes[0]
+            ret = tokenizer.decode(tokens[: idx + 1])
+
+        list_echo.append(ret)
+    console = rich.console.Console()
+    console.rule(str_rule)
+    if verbose:
+        for i, echo_i in enumerate(list_echo):
+            console.rule(f"{i}")
+            rich.print(echo_i)
+
+    return list_echo
